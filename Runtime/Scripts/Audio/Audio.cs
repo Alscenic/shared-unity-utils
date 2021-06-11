@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using CGenStudios.UnityUtils.CompositeClasses;
 
 namespace CGenStudios.UnityUtils.Audio
 {
