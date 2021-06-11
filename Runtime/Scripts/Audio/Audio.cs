@@ -119,7 +119,7 @@ namespace CGenStudios.UnityUtils.Audio
 		/// <returns>An Audio.</returns>
 		public static Audio Play(AudioData data)
 		{
-			Audio audio = Instantiate(Globals.AudioPrefab).GetComponent<Audio>();
+			Audio audio = Instantiate(AudioManager.Instance.AudioPrefab).GetComponent<Audio>();
 
 			audio.Data = data;
 			audio.UpdateSource();
