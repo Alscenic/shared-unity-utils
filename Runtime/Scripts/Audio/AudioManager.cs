@@ -12,14 +12,7 @@ namespace CGenStudios.UnityUtils.Audio
 		/// <summary>
 		/// Gets the audio prefab.
 		/// </summary>
-		public GameObject AudioPrefab => this.m_AudioPrefab;
-
-		#endregion
-
-		#region Private Fields
-
-		[SerializeField]
-		private GameObject m_AudioPrefab = null;
+		public GameObject AudioPrefab => Resources.Load<GameObject>("alscenicUtils_audio");
 
 		#endregion
 	}
