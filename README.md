@@ -14,28 +14,28 @@ Entirely my own code
 
 # Files (Features)
 * Input
-  * PlayerInput
+  * **PlayerInput**
     * A unique way to intercept player input. The reason this package requires UnityEngine.Input. Basically routes specific InputActions directly through UnityEvents.
 * Audio
-  * class AudioData
+  * **AudioData**
     * Stores information used to play audio.
-  * class Audio
+  * **Audio**
     * Call Audio.Play() with your AudioData to easily play some audio.
-  * AudioManager
+  * **AudioManager**
     * Created automatically at runtime.
 * Classes
-  * Extensions
+  * **Extensions**
     * Various extensions.
-  * RangedFloat
+  * **RangedFloat**
     * Composed of two floats, a min and a max, and can return Random.Range(min,max).
-  * UnityEventT
+  * **UnityEventT**
     * Various UnityEvent types.
-  * VectorCurve
+  * **VectorCurve**
     * Serializable class containing 4 different AnimationCurves, and can be evaluated as Vector2/3/4/Quaternion.
 * Misc
-  * LazySingletonMonoBehaviour
+  * **LazySingletonMonoBehaviour**
     * Inherit from this for an easy created-on-demand MonoBehaviour singleton.
-  * Destroyer
+  * **Destroyer**
     * Destroys a GameObject, or itself if one isn't specified.
 
 # How to use it
