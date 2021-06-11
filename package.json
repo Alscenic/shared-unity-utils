@@ -1,0 +1,25 @@
+{
+  "name": "com.alscenic.utils",
+  "version": "0.1.0",
+  "displayName": "Alscenic Utils",
+  "description": "Some useful stuff I made.",
+  "unity": "2021.1",
+  "unityRelease": "7f1",
+  "keywords": [
+    "current.gen Studios",
+    "current gen Studios",
+    "currentgen Studios",
+    "current.gen Studio",
+    "current gen Studio",
+    "currentgen Studio",
+    "cgs",
+    "Alscenic",
+    "Utils"
+  ],
+  "author": {
+    "name": "Kyle Lamothe",
+    "email": "kyle@alscenic.com",
+    "url": "https://www.alscenic.com/"
+  },
+  "type": "library"
+}
