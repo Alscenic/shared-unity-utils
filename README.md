@@ -17,14 +17,12 @@ Entirely my own code
   * PlayerInput
     * A unique way to intercept player input. The reason this package requires UnityEngine.Input. Basically routes specific InputActions directly through UnityEvents.
 * Audio
-  * Audio.cs
-    * class AudioData
-      * Stores information used to play audio.
-    * class Audio
-      * Call Audio.Play() with your AudioData to easily play some audio.
-  * AudioManager.cs
-    * AudioManager
-      * Created automatically at runtime.
+  * class AudioData
+    * Stores information used to play audio.
+  * class Audio
+    * Call Audio.Play() with your AudioData to easily play some audio.
+  * AudioManager
+    * Created automatically at runtime.
 * Classes
   * Extensions
     * Various extensions.
