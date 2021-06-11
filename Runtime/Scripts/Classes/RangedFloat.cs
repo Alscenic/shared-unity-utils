@@ -3,7 +3,7 @@
 
 using UnityEngine;
 
-namespace CGenStudios.RadMags
+namespace CGenStudios.UnityUtils.CompositeClasses
 {
 
 	/// <summary>
