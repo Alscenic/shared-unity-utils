@@ -1,6 +1,6 @@
 {
   "name": "com.alscenic.utils",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "displayName": "Alscenic Utils",
   "description": "Some useful stuff I made.",
   "unity": "2021.1",
@@ -21,8 +21,5 @@
     "email": "kyle@alscenic.com",
     "url": "https://www.alscenic.com/"
   },
-  "type": "library",
-  "dependencies": {
-	"com.unity.inputsystem": "1.0.2",
-  }
+  "type": "library"
 }
