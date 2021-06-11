@@ -13,6 +13,9 @@ Entirely my own code
   * yea
 
 # Files (Features)
+* Input
+  * PlayerInput
+    * A unique way to intercept player input. The reason this package requires UnityEngine.Input. Basically routes specific InputActions directly through UnityEvents.
 * Audio
   * Audio.cs
     * class AudioData
@@ -36,9 +39,6 @@ Entirely my own code
     * Inherit from this for an easy created-on-demand MonoBehaviour singleton.
   * Destroyer
     * Destroys a GameObject, or itself if one isn't specified.
-* Input
-  * PlayerInput
-    * A unique way to intercept player input. The reason this package requires UnityEngine.Input. Basically routes specific InputActions directly through UnityEvents.
 
 # How to use it
 I might explain everything eventually, but for now, the code is documented so figure it out ig
