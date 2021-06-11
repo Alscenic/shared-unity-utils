@@ -118,4 +118,29 @@ namespace CGenStudios.UnityUtils.CompositeClasses
 		#endregion
 
 	}
+
+	public static class SpaceDataExt
+	{
+		/// <summary>
+		/// Applies a <see cref="SpaceData"/> to this <see cref="Transform"/>.
+		/// </summary>
+		/// <param name="t">The t.</param>
+		/// <param name="spaceData">The space data.</param>
+		/// <param name="world">If true, world.</param>
+		public static void ApplySpaceData(this Transform t,SpaceData spaceData,bool world)
+		{
+			if (world)
+			{
+				t.position = spaceData.Position;
+				t.rotation = spaceData.Rotation;
+			}
+			else
+			{
+				t.localPosition = spaceData.Position;
+				t.localRotation = spaceData.Rotation;
+			}
+
+			t.localScale = spaceData.Scale;
+		}
+	}
 }
