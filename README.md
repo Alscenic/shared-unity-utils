@@ -38,5 +38,8 @@ Entirely my own code
   * **Destroyer**
     * Destroys a GameObject, or itself if one isn't specified.
 
+# Installation
+Open the package manager and click the `➕▾` and add a new Git package - paste in this URL: `https://github.com/Alscenic/shared-unity-utils.git`
+
 # How to use it
 I might explain everything eventually, but for now, the code is documented so figure it out ig
