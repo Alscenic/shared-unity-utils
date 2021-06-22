@@ -103,6 +103,22 @@ namespace CGenStudios.UnityUtils.Input
 			[SerializeField]
 			private UnityEventBool m_ButtonPressedDirector = new UnityEventBool();
 
+			/// <summary>
+			/// Initializes a new instance of the <see cref="Director"/> class.
+			/// </summary>
+			public Director(bool pressed,InputActionReference action,CursorLockStateCheckType cursorLockStateCheckType,float multiplier,UnityEventFloat floatDirector,UnityEventVector2 vector2Director,UnityEvent buttonDownDirector,UnityEvent buttonUpDirector,UnityEventBool buttonPressedDirector)
+			{
+				Pressed = pressed;
+				this.m_Action = action;
+				this.m_CursorLockStateCheckType = cursorLockStateCheckType;
+				this.m_Multiplier = multiplier;
+				this.m_FloatDirector = floatDirector;
+				this.m_Vector2Director = vector2Director;
+				this.m_ButtonDownDirector = buttonDownDirector;
+				this.m_ButtonUpDirector = buttonUpDirector;
+				this.m_ButtonPressedDirector = buttonPressedDirector;
+			}
+
 			#endregion
 
 			#region Public Methods
