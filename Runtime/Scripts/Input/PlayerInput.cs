@@ -49,6 +49,36 @@ namespace CGenStudios.UnityUtils.Input
 			/// </summary>
 			public CursorLockStateCheckType CursorLockStateCheckType => this.m_CursorLockStateCheckType;
 
+			/// <summary>
+			/// Gets the float director.
+			/// </summary>
+			public UnityEventFloat FloatDirector => this.m_FloatDirector;
+
+			/// <summary>
+			/// Gets the vector2 director.
+			/// </summary>
+			public UnityEventVector2 Vector2Director => this.m_Vector2Director;
+
+			/// <summary>
+			/// Gets the button down director.
+			/// </summary>
+			public UnityEvent ButtonDownDirector => this.m_ButtonDownDirector;
+
+			/// <summary>
+			/// Gets the button up director.
+			/// </summary>
+			public UnityEvent ButtonUpDirector => this.m_ButtonUpDirector;
+
+			/// <summary>
+			/// Gets the button pressed director.
+			/// </summary>
+			public UnityEventBool ButtonPressedDirector => this.m_ButtonPressedDirector;
+
+			/// <summary>
+			/// Gets the multiplier.
+			/// </summary>
+			public float Multiplier => this.m_Multiplier;
+
 			#endregion
 
 			#region Private Indexers + Properties
@@ -103,6 +133,10 @@ namespace CGenStudios.UnityUtils.Input
 			[SerializeField]
 			private UnityEventBool m_ButtonPressedDirector = new UnityEventBool();
 
+			#endregion
+
+			#region Public Constructors + Destructors
+
 			/// <summary>
 			/// Initializes a new instance of the <see cref="Director"/> class.
 			/// </summary>
@@ -155,15 +189,15 @@ namespace CGenStudios.UnityUtils.Input
 				switch (ValueType)
 				{
 					case "float":
-						this.m_FloatDirector.Invoke(Action.ReadValue<float>() * this.m_Multiplier);
+						this.FloatDirector.Invoke(Action.ReadValue<float>() * this.Multiplier);
 						break;
 
 					case "Vector2":
-						this.m_Vector2Director.Invoke(Action.ReadValue<Vector2>() * this.m_Multiplier);
+						this.Vector2Director.Invoke(Action.ReadValue<Vector2>() * this.Multiplier);
 						break;
 
 					case "Button":
-						this.m_ButtonPressedDirector.Invoke(Pressed);
+						this.ButtonPressedDirector.Invoke(Pressed);
 						break;
 				}
 			}
@@ -179,7 +213,7 @@ namespace CGenStudios.UnityUtils.Input
 				if (!CheckCursor())
 					return;
 
-				this.m_ButtonDownDirector.Invoke();
+				this.ButtonDownDirector.Invoke();
 				Pressed = true;
 			}
 
@@ -190,7 +224,7 @@ namespace CGenStudios.UnityUtils.Input
 				if (!CheckCursor())
 					return;
 
-				this.m_ButtonUpDirector.Invoke();
+				this.ButtonUpDirector.Invoke();
 				Pressed = false;
 			}
 
