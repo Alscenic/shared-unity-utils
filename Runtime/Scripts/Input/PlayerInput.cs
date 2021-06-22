@@ -106,9 +106,8 @@ namespace CGenStudios.UnityUtils.Input
 			/// <summary>
 			/// Initializes a new instance of the <see cref="Director"/> class.
 			/// </summary>
-			public Director(bool pressed,InputActionReference action,CursorLockStateCheckType cursorLockStateCheckType,float multiplier,UnityEventFloat floatDirector,UnityEventVector2 vector2Director,UnityEvent buttonDownDirector,UnityEvent buttonUpDirector,UnityEventBool buttonPressedDirector)
+			public Director(InputActionReference action,CursorLockStateCheckType cursorLockStateCheckType,float multiplier,UnityEventFloat floatDirector,UnityEventVector2 vector2Director,UnityEvent buttonDownDirector,UnityEvent buttonUpDirector,UnityEventBool buttonPressedDirector)
 			{
-				Pressed = pressed;
 				this.m_Action = action;
 				this.m_CursorLockStateCheckType = cursorLockStateCheckType;
 				this.m_Multiplier = multiplier;
