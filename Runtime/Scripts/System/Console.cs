@@ -24,6 +24,7 @@ namespace CGenStudios.UnityUtils
             TooManyArgs,
             WrongType,
             CommandDoesNotExist,
+            BadQuotes,
         }
 
         public enum LogLevel
@@ -270,19 +271,60 @@ namespace CGenStudios.UnityUtils
             }
 
             //
-            // Static methods
+            // * Static methods
 
             public static ArgumentResult FromInput(Prototype prototype, string input, out Argument[] args)
             {
-                string[] rawArgs = input.Split(' ');
+                input = input.Trim();
+
+                // while (input.IndexOf("  ") >= 0)
+                // {
+                //     input = input.Replace("  ", " ");
+                // }
+
+                List<StringBuilder> strArgs = new List<StringBuilder>();
+                strArgs.Add(new StringBuilder());
+
+                bool inQuotes = false;
+
+                for (int i = 0; i < input.Length; i++)
+                {
+                    bool isQuote = input[i] == '"' && (i == 0 || input[i - 1] != '\\');
+
+                    if (isQuote)
+                    {
+                        inQuotes = !inQuotes;
+                    }
+
+                    if ((input[i] == ' ' && !inQuotes) || isQuote)
+                    {
+                        if (strArgs[strArgs.Count - 1].Length > 0)
+                        {
+                            strArgs.Add(new StringBuilder());
+                        }
+                    }
+                    else
+                    {
+                        strArgs[strArgs.Count - 1].Append(input[i]);
+                    }
+                }
+
                 args = new Argument[prototype.Parameters.Length];
 
-                for (int i = 0; i < rawArgs.Length; i++)
+                if (inQuotes)
                 {
-                    if (i >= prototype.Parameters.Length)
-                    {
-                        return ArgumentResult.TooManyArgs;
-                    }
+                    return ArgumentResult.BadQuotes;
+                }
+
+                List<string> rawArgs = new List<string>();
+                for (int i = 0; i < strArgs.Count; i++)
+                {
+                    rawArgs.Add(strArgs[i].ToString().Trim());
+                }
+
+                if (rawArgs.Count > prototype.Parameters.Length)
+                {
+                    return ArgumentResult.TooManyArgs;
                 }
 
                 for (int i = 0; i < prototype.Parameters.Length; i++)
@@ -292,7 +334,7 @@ namespace CGenStudios.UnityUtils
                         break;
                     }
 
-                    if (i >= args.Length)
+                    if (i >= rawArgs.Count)
                     {
                         return ArgumentResult.TooFewArgs;
                     }
@@ -300,7 +342,7 @@ namespace CGenStudios.UnityUtils
 
                 for (int i = 0; i < prototype.Parameters.Length; i++)
                 {
-                    args[i] = new Argument(i < rawArgs.Length ? rawArgs[i] : prototype.Parameters[i].Default, prototype.Parameters[i]);
+                    args[i] = new Argument(i < rawArgs.Count ? rawArgs[i] : prototype.Parameters[i].Default, prototype.Parameters[i]);
 
                     if (!args[i].IsValid)
                     {
@@ -418,22 +460,22 @@ namespace CGenStudios.UnityUtils
                     switch (LogLevel)
                     {
                         case LogLevel.Success:
-                            stringBuilder.Append("<color=64FF64>");
+                            stringBuilder.Append("<color=#64FF64>");
                             break;
                         case LogLevel.Info:
-                            stringBuilder.Append("<color=96C8FF>");
+                            stringBuilder.Append("<color=#96C8FF>");
                             break;
                         case LogLevel.Command:
-                            stringBuilder.Append("<color=DDDDDD>");
+                            stringBuilder.Append("<color=#999999>");
                             break;
                         case LogLevel.Log:
-                            stringBuilder.Append("<color=FFFFFF>");
+                            stringBuilder.Append("<color=#FFFFFF>");
                             break;
                         case LogLevel.Warning:
-                            stringBuilder.Append("<color=FFFF64>");
+                            stringBuilder.Append("<color=#FFFF64>");
                             break;
                         case LogLevel.Error:
-                            stringBuilder.Append("<color=FF6464>");
+                            stringBuilder.Append("<color=#FF6464>");
                             break;
                     }
 
@@ -509,10 +551,10 @@ namespace CGenStudios.UnityUtils
             Prototypes.Add(new Prototype("log", "Adds a log entry.", new Parameter[]
             {
                 new Parameter("msg",ParameterType.String,"The log message.",null,Parameter.MATCH_ANY_PATTERN),
-                new Parameter("type",ParameterType.Integer,"The log type.","2",Parameter.MATCH_INT_PATTERN)
+                new Parameter("lvl",ParameterType.Integer,"The log level.","2",Parameter.MATCH_INT_PATTERN)
             }, (command) =>
             {
-
+                Log(command.Arguments[0].Input, (LogLevel)Mathf.Clamp(command.Arguments[1].GetInt, 0, typeof(LogLevel).GetEnumValues().Length - 1));
             }));
         }
 
