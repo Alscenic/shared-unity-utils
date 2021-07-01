@@ -1,27 +1,26 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using System.Reflection;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace CGenStudios.UnityUtils
 {
-	/// <summary>
-	/// Created automatically at runtime.
-	/// </summary>
-	public sealed class UnityUtilsManager : LazySingletonMonoBehaviour<UnityUtilsManager>
-	{
+    /// <summary>
+    /// Created automatically at runtime.
+    /// </summary>
+    public sealed class UnityUtilsManager : SingletonMonoBehaviour<UnityUtilsManager>
+    {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RuntimeInitializeOnLoadMethod()
+        {
+            Initialize();
+        }
 
-		#region Public Indexers + Properties
+        public static UnityEvent OnUpdate { get; } = new UnityEvent();
 
-		public static UnityEvent OnUpdate { get; } = new UnityEvent();
-
-		#endregion
-
-		#region Private Methods
-
-		private void Update()
-		{
-			OnUpdate.Invoke();
-		}
-
-		#endregion
-	}
+        private void Update()
+        {
+            OnUpdate.Invoke();
+        }
+    }
 }

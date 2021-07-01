@@ -1,10 +1,10 @@
 {
   "name": "com.alscenic.utils",
-  "version": "0.1.18",
+  "version": "0.2.0",
   "displayName": "Alscenic Utils",
   "description": "Some useful stuff I made.",
   "unity": "2021.1",
-  "unityRelease": "7f1",
+  "unityRelease": "12f1",
   "keywords": [
     "current.gen Studios",
     "current gen Studios",
@@ -13,8 +13,11 @@
     "current gen Studio",
     "currentgen Studio",
     "cgs",
-    "Alscenic",
-    "Utils"
+    "cgen studios",
+    "cgenstudios",
+    "alscenic",
+    "alscenic utils",
+    "utils"
   ],
   "author": {
     "name": "Kyle Lamothe",
