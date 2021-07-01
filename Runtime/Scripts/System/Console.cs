@@ -88,8 +88,8 @@ namespace CGenStudios.UnityUtils
 
             public void LogHelp()
             {
-                Instance.Log(Identifier + " - " + Description);
-                Instance.Log("Usage: " + UsageFull);
+                Log(Identifier + " - " + Description);
+                Log("Usage: " + UsageFull);
             }
 
             public void Fire(Command cmd)
@@ -501,9 +501,18 @@ namespace CGenStudios.UnityUtils
                 {
                     foreach (Prototype prototype in Prototypes)
                     {
-                        prototype.LogHelp();
+                        Log(prototype.UsageShort, LogLevel.Info);
                     }
                 }
+            }));
+
+            Prototypes.Add(new Prototype("log", "Adds a log entry.", new Parameter[]
+            {
+                new Parameter("msg",ParameterType.String,"The log message.",null,Parameter.MATCH_ANY_PATTERN),
+                new Parameter("type",ParameterType.Integer,"The log type.","2",Parameter.MATCH_INT_PATTERN)
+            }, (command) =>
+            {
+
             }));
         }
 
@@ -583,13 +592,23 @@ namespace CGenStudios.UnityUtils
             public Rect LogAreaScrollRect => new Rect(ActualRect.position + new Vector2(0.0f, ActualGripSize),
             ActualRect.size - new Vector2(ActualGripSize, ActualGripSize * 2.0f + ActualInputFieldSize));
 
-            public Rect LogAreaRect => new Rect(Vector2.zero, new Vector2(0.0f, LogAreaScrollRect.size.y - 1.0f) + new Vector2(MaxLogAreaWidth, -GUI.skin.horizontalScrollbar.CalcHeight(new GUIContent(), 100.0f)));
+            public float ScrollbarHeight => GUI.skin.horizontalScrollbar.CalcHeight(new GUIContent(), 100.0f);
+
+            public Rect LogAreaRect => new Rect(Vector2.zero, new Vector2(0.0f, LogAreaScrollRect.size.y - 1.0f) + new Vector2(MaxLogAreaWidth, -ScrollbarHeight));
 
             public float MaxLogAreaWidth { get; private set; } = 0.0f;
 
             private Vector2 MousePos => Event.current.mousePosition;
 
             public Vector2 ScrollPos { get; set; } = new Vector2();
+
+            private int LocalScrollLine { get; set; } = 0;
+
+            public int ScrollLine
+            {
+                get => LocalScrollLine;
+                set => LocalScrollLine = Mathf.Clamp(value, 0, Instance.LocalLogger.Entries.Count - 1);
+            }
 
             public void Draw()
             {
@@ -611,12 +630,13 @@ namespace CGenStudios.UnityUtils
 
                 float lineHeight = GUI.skin.label.CalcHeight(new GUIContent(" "), 10.0f);
                 int i = 0;
-                while ((i + 1) * lineHeight <= LogAreaRect.height && i < Instance.LocalLogger.Entries.Count)
+                while ((i + 1) * lineHeight <= LogAreaRect.height && Instance.LocalLogger.Entries.Count - (i + ScrollLine) - 1 >= 0)
                 {
-                    string line = i.ToString("n0") + ". " + Instance.LocalLogger.Entries[i].ToString();
+                    int lineNum = Instance.LocalLogger.Entries.Count - (i + ScrollLine) - 1;
+                    string line = lineNum.ToString("n0") + ". " + Instance.LocalLogger.Entries[lineNum].ToString();
                     Vector2 lineSize = GUI.skin.label.CalcSize(new GUIContent(line));
                     MaxLogAreaWidth = Mathf.Max(lineSize.x, MaxLogAreaWidth);
-                    GUI.Label(new Rect(new Vector2(0.0f, i * lineHeight), new Vector2(lineSize.x, lineSize.y)), line);
+                    GUI.Label(new Rect(new Vector2(0.0f, LogAreaRect.height - i * lineHeight - ScrollbarHeight), new Vector2(lineSize.x, lineSize.y)), line);
                     i++;
                 }
                 GUI.EndScrollView(false);
@@ -657,6 +677,11 @@ namespace CGenStudios.UnityUtils
                     }
                 }
 
+                if (ActualRect.Contains(MousePos) && Event.current.isScrollWheel)
+                {
+                    ScrollLine -= (int)Mathf.Sign(Event.current.delta.y);
+                }
+
                 if (Grabbing)
                 {
                     ActualRect = new Rect(MousePos - MouseDownOffset, ActualRect.size);
@@ -691,7 +716,7 @@ namespace CGenStudios.UnityUtils
                     }
                     else
                     {
-                        Instance.Log("Could not execute command: " + result.ToString(), LogLevel.Warning);
+                        Log("Could not execute command: " + result.ToString(), LogLevel.Info);
                     }
                 }
 
@@ -748,19 +773,19 @@ namespace CGenStudios.UnityUtils
             }
         }
 
-        public void Log(object message)
+        public static void Log(object message)
         {
             Log(message, LogLevel.Log);
         }
 
-        public void Log(object message, LogLevel logLevel)
+        public static void Log(object message, LogLevel logLevel)
         {
-            LocalLogger.Entries.Add(new LogEntry(message, logLevel));
+            Instance.LocalLogger.Entries.Add(new LogEntry(message, logLevel));
         }
 
         public static ArgumentResult ParseCommand(string input, out Command command)
         {
-            Instance.Log(input, LogLevel.Command);
+            Log(input, LogLevel.Command);
 
             int identifierEnd = input.IndexOf(' ');
             string identifier = input.Substring(0, identifierEnd < 0 ? input.Length : identifierEnd);
