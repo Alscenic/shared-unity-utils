@@ -521,7 +521,7 @@ namespace CGenStudios.UnityUtils
 
         public Logger LocalLogger { get; } = new Logger();
 
-        protected PrototypeCollection Prototypes { get; } = new PrototypeCollection();
+        public PrototypeCollection Prototypes { get; } = new PrototypeCollection();
 
         public GUISkin Skin { get; set; } = null;
 
