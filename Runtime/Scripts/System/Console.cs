@@ -125,6 +125,10 @@ namespace CGenStudios.UnityUtils
 
             public const string MATCH_FALSE_PATTERN = @"(?i)\b((no)|(false)|(n)|(f)|(disabled?)|(0)|(off)|(reset))\b";
 
+            public const string MATCH_HEX_PATTERN = @"^(?i)[0-9A-F]{6}$";
+
+            public const string MATCH_HEXCOLOR_PATTERN = @"^(?i)#[0-9A-F]{6}$";
+
             //
             // Constructor
 
@@ -261,6 +265,19 @@ namespace CGenStudios.UnityUtils
                 }
             }
 
+            public double GetDouble
+            {
+                get
+                {
+                    if (IsFloat)
+                    {
+                        return double.Parse(Input);
+                    }
+
+                    return 0.0d;
+                }
+            }
+
             public int GetInt
             {
                 get
@@ -268,6 +285,19 @@ namespace CGenStudios.UnityUtils
                     if (IsInt)
                     {
                         return int.Parse(Input);
+                    }
+
+                    return 0;
+                }
+            }
+
+            public long GetLong
+            {
+                get
+                {
+                    if (IsInt)
+                    {
+                        return long.Parse(Input);
                     }
 
                     return 0;
@@ -501,6 +531,8 @@ namespace CGenStudios.UnityUtils
                 }
             }
 
+            public string Body => (string.IsNullOrEmpty(Color) ? " " : " <color=" + Color + ">") + Message.ToString().Split('\n')[0] + (string.IsNullOrEmpty(Color) ? "" : "</color>");
+
             public override bool Equals(object obj)
             {
                 return base.Equals(obj);
@@ -513,7 +545,7 @@ namespace CGenStudios.UnityUtils
 
             public override string ToString()
             {
-                return Prefix + (Color == null ? " " : " <color=" + Color + ">") + Message.ToString() + (Color == null ? "" : "</color>");
+                return Prefix + Body;
             }
         }
 
@@ -521,7 +553,7 @@ namespace CGenStudios.UnityUtils
 
         public Logger LocalLogger { get; } = new Logger();
 
-        public PrototypeCollection Prototypes { get; } = new PrototypeCollection();
+        protected PrototypeCollection Prototypes { get; } = new PrototypeCollection();
 
         public GUISkin Skin { get; set; } = null;
 
@@ -544,7 +576,7 @@ namespace CGenStudios.UnityUtils
 
         private void AddBaseCommands()
         {
-            Prototypes.Add(new Prototype("help", "Logs all valid commands and their uses", new Parameter[]
+            AddPrototype(new Prototype("help", "Logs all valid commands and their uses", new Parameter[]
             {
                 new Parameter("cmd",ParameterType.String,"The command to get help with","",Parameter.MATCH_ANY_PATTERN)
             }, (command) =>
@@ -569,7 +601,7 @@ namespace CGenStudios.UnityUtils
                 }
             }));
 
-            Prototypes.Add(new Prototype("list", "Lists all registered commands and their parameters", new Parameter[] { }, (command) =>
+            AddPrototype(new Prototype("list", "Lists all registered commands and their parameters", new Parameter[] { }, (command) =>
             {
                 foreach (Prototype prototype in Prototypes)
                 {
@@ -577,16 +609,17 @@ namespace CGenStudios.UnityUtils
                 }
             }));
 
-            Prototypes.Add(new Prototype("log", "Adds a log entry", new Parameter[]
+            AddPrototype(new Prototype("log", "Adds a log entry", new Parameter[]
             {
                 new Parameter("msg",ParameterType.String,"The log message",null,Parameter.MATCH_ANY_PATTERN),
-                new Parameter("lvl",ParameterType.Integer,"The log level","3",Parameter.MATCH_INT_PATTERN)
+                new Parameter("lvl",ParameterType.Integer,"The log level","3",Parameter.MATCH_INT_PATTERN),
+                new Parameter("color",ParameterType.Integer,"The message color","",Parameter.MATCH_HEXCOLOR_PATTERN)
             }, (command) =>
             {
-                Log(command.Arguments[0].Input, (LogLevel)Mathf.Clamp(command.Arguments[1].GetInt, 0, typeof(LogLevel).GetEnumValues().Length - 1));
+                Log(command.Arguments[0].Input, (LogLevel)Mathf.Clamp(command.Arguments[1].GetInt, 0, typeof(LogLevel).GetEnumValues().Length - 1), command.Arguments[2].Input);
             }));
 
-            Prototypes.Add(new Prototype("logtest", "Adds a log entry of each level", new Parameter[] { }, (command) =>
+            AddPrototype(new Prototype("logtest", "Adds a log entry of each level", new Parameter[] { }, (command) =>
             {
                 for (int i = 0; i < typeof(LogLevel).GetEnumValues().Length; i++)
                 {
@@ -594,7 +627,7 @@ namespace CGenStudios.UnityUtils
                 }
             }));
 
-            Prototypes.Add(new Prototype("phys.gravity", "Adds a log entry", new Parameter[]
+            AddPrototype(new Prototype("phys.gravity", "Adds a log entry", new Parameter[]
             {
                 new Parameter("x",ParameterType.Decimal,"Gravity X",null,Parameter.MATCH_FLOAT_PATTERN),
                 new Parameter("y",ParameterType.Decimal,"Gravity Y",null,Parameter.MATCH_FLOAT_PATTERN),
@@ -604,7 +637,7 @@ namespace CGenStudios.UnityUtils
                 Physics.gravity = new Vector3(command.Arguments[0].GetFloat, command.Arguments[1].GetFloat, command.Arguments[2].GetFloat);
             }));
 
-            Prototypes.Add(new Prototype("phys2d.gravity", "Adds a log entry", new Parameter[]
+            AddPrototype(new Prototype("phys2d.gravity", "Adds a log entry", new Parameter[]
             {
                 new Parameter("x",ParameterType.Decimal,"Gravity X",null,Parameter.MATCH_FLOAT_PATTERN),
                 new Parameter("y",ParameterType.Decimal,"Gravity Y",null,Parameter.MATCH_FLOAT_PATTERN)
@@ -622,7 +655,7 @@ namespace CGenStudios.UnityUtils
 
             public const float MIN_WIDTH = 400.0f;
 
-            public const float MIN_HEIGHT = 300.0f;
+            public const float MIN_HEIGHT = 110.0f;
 
             private Rect LocalRect { get; set; } = new Rect(20.0f, 20.0f, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
@@ -650,7 +683,7 @@ namespace CGenStudios.UnityUtils
 
             public float GripSize { get; set; } = 20.0f;
 
-            public float InputFieldSize { get; set; } = 32.0f;
+            public float InputFieldSize { get; set; } = 40.0f;
 
             public bool MouseDown { get; private set; } = false;
 
@@ -680,6 +713,8 @@ namespace CGenStudios.UnityUtils
             public Rect LogAreaScrollRect => new Rect(InteriorRect.position,
             InteriorRect.size - new Vector2(0.0f, InputFieldSize));
 
+            public float GutterWidth { get; set; } = 0.0f;
+
             public float ScrollbarHeight => GUI.skin.horizontalScrollbar.CalcHeight(new GUIContent(), 100.0f);
 
             public Rect LogAreaRect => new Rect(Vector2.zero, new Vector2(0.0f, LogAreaScrollRect.size.y - 1.0f) + new Vector2(MaxLogAreaWidth, -ScrollbarHeight));
@@ -692,7 +727,13 @@ namespace CGenStudios.UnityUtils
 
             private int LocalScrollLine { get; set; } = 0;
 
-            private bool FocusInputField { get; set; } = false;
+            private bool JustOpenedThisFrame { get; set; } = false;
+
+            public float LineOffset { get; private set; } = 0.0f;
+
+            private int LastLineNum { get; set; } = 0;
+
+            public string LastCommand { get; set; } = "";
 
             public int ScrollLine
             {
@@ -702,6 +743,11 @@ namespace CGenStudios.UnityUtils
 
             public void Draw()
             {
+                if (Event.current.keyCode == KeyCode.UpArrow)
+                {
+                    CurrentInput = LastCommand;
+                }
+
                 GUI.Box(WindowRect, new GUIContent());
 
                 // Vector2 actualGripSquare = new Vector2(GripSize, GripSize);
@@ -709,10 +755,17 @@ namespace CGenStudios.UnityUtils
 
                 GUI.SetNextControlName("ConsoleInput");
                 CurrentInput = GUI.TextField(InputFieldRect, CurrentInput);
-                if (FocusInputField)
+                if (JustOpenedThisFrame)
                 {
                     GUI.FocusControl("ConsoleInput");
-                    FocusInputField = false;
+
+                    for (int lvl = 0; lvl < typeof(LogLevel).GetEnumValues().Length; lvl++)
+                    {
+                        GutterWidth = Mathf.Max(GutterWidth, GUI.skin.label.CalcSize(new GUIContent(((LogLevel)lvl).ToString() + "[]")).x);
+                    }
+                    GutterWidth += 4.0f;
+
+                    JustOpenedThisFrame = false;
                 }
 
                 while (CurrentInput.IndexOf('`') >= 0)
@@ -725,16 +778,30 @@ namespace CGenStudios.UnityUtils
                 MaxLogAreaWidth = 0.0f;
 
                 float lineHeight = GUI.skin.label.CalcHeight(new GUIContent(" "), 10.0f);
+
+                int bottomLineNum = Instance.LocalLogger.Entries.Count - ScrollLine - 1;
+                if (LastLineNum != bottomLineNum)
+                {
+                    LineOffset = (bottomLineNum - LastLineNum) * lineHeight;
+                }
+
                 int i = 0;
                 while ((i + 1) * lineHeight <= LogAreaRect.height && Instance.LocalLogger.Entries.Count - (i + ScrollLine) - 1 >= 0)
                 {
                     int lineNum = Instance.LocalLogger.Entries.Count - (i + ScrollLine) - 1;
-                    string line = lineNum.ToString("n0") + ". " + Instance.LocalLogger.Entries[lineNum].ToString();
+                    string lineNumString = lineNum.ToString("n0") + ". ";
+                    float gutter = GUI.skin.label.CalcSize(new GUIContent(lineNumString.Replace(' ', '_'))).x + GutterWidth;
+                    string gutterString = lineNumString + Instance.LocalLogger.Entries[lineNum].Prefix;
+                    string line = Instance.LocalLogger.Entries[lineNum].Body;
                     Vector2 lineSize = GUI.skin.label.CalcSize(new GUIContent(line));
-                    MaxLogAreaWidth = Mathf.Max(lineSize.x, MaxLogAreaWidth);
-                    GUI.Label(new Rect(new Vector2(0.0f, LogAreaRect.height - i * lineHeight - ScrollbarHeight), new Vector2(lineSize.x, lineSize.y)), line);
+
+                    MaxLogAreaWidth = Mathf.Max(lineSize.x + gutter, MaxLogAreaWidth);
+
+                    GUI.Label(new Rect(new Vector2(0.0f, (LogAreaRect.height - i * lineHeight - ScrollbarHeight) + LineOffset), new Vector2(gutter, lineSize.y)), gutterString);
+                    GUI.Label(new Rect(new Vector2(gutter, (LogAreaRect.height - i * lineHeight - ScrollbarHeight) + LineOffset), new Vector2(lineSize.x, lineSize.y)), line);
                     i++;
                 }
+                LastLineNum = bottomLineNum;
                 GUI.EndScrollView(false);
             }
 
@@ -798,7 +865,7 @@ namespace CGenStudios.UnityUtils
 
             public void Open()
             {
-                FocusInputField = true;
+                JustOpenedThisFrame = true;
             }
 
             public void Send()
@@ -816,13 +883,61 @@ namespace CGenStudios.UnityUtils
                     }
                 }
 
+                LastCommand = CurrentInput;
                 CurrentInput = "";
+            }
+
+            public void Update()
+            {
+                LineOffset = Mathf.Lerp(LineOffset, 0.0f, Time.deltaTime * 10.0f);
+
+                WindowRect = WindowRect;
             }
         }
 
+        /// <summary>
+        /// Whether the console is enabled.
+        /// </summary>
         public bool ConsoleEnabled { get; set; } = true;
 
         public Window MainWindow { get; } = new Window();
+
+        public void AddPrototype(Prototype prototype)
+        {
+            foreach (Prototype p in Prototypes)
+            {
+                if (p.Identifier == prototype.Identifier)
+                {
+                    Log("Prototype \"" + prototype.Identifier + "\" has already been added! Ignoring", LogLevel.Warning);
+                    return;
+                }
+            }
+
+            bool atOptionalValues = false;
+            for (int i = 0; i < prototype.Parameters.Length; i++)
+            {
+                if (prototype.Parameters[i].Default != null)
+                {
+                    atOptionalValues = true;
+                }
+                else if (atOptionalValues)
+                {
+                    Log("Prototype \"" + prototype.Identifier + "\" has mixed optional and required parameters. This causes confusion in the command parser. "
+                    + "All optional parameters must come after all required parameters.", LogLevel.Warning);
+                    Log("To fix this, move any optional parameters to the end of the parameter list.", LogLevel.Warning);
+                    return;
+                }
+            }
+
+            Prototypes.Add(prototype);
+        }
+
+        public Prototype GetPrototype(string identifier)
+        {
+            Prototype prototype = Prototypes.Single((prototype) => { return prototype.Identifier == identifier; });
+
+            return prototype;
+        }
 
         private void OnGUI()
         {
@@ -844,9 +959,14 @@ namespace CGenStudios.UnityUtils
                     Toggle();
                 }
 
-                if (IsOpen && (UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                if (IsOpen)
                 {
-                    MainWindow.Send();
+                    if ((UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                    {
+                        MainWindow.Send();
+                    }
+
+                    MainWindow.Update();
                 }
             }
         }
@@ -874,21 +994,42 @@ namespace CGenStudios.UnityUtils
             }
         }
 
+        /// <summary>
+        /// Logs a message.
+        /// </summary>
+        /// <param name="message">The message.</param>
         public static void Log(object message)
         {
             Log(message, LogLevel.Log);
         }
 
+        /// <summary>
+        /// Logs a message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="logLevel">The log level.</param>
         public static void Log(object message, LogLevel logLevel)
         {
             Log(message, logLevel, null);
         }
 
+        /// <summary>
+        /// Logs a message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="logLevel">The log level.</param>
+        /// <param name="color">The message color. Must be in "#FFFFFF" hex format.</param>
         public static void Log(object message, LogLevel logLevel, string color)
         {
             Instance.LocalLogger.Entries.Add(new LogEntry(message, logLevel, color));
         }
 
+        /// <summary>
+        /// Parses a command. Does not run the command.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="command">The generated command.</param>
+        /// <returns>The ArgumentResult.</returns>
         public static ArgumentResult ParseCommand(string input, out Command command)
         {
             input = input.Trim();
