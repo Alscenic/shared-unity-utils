@@ -15,6 +15,7 @@ namespace CGenStudios.UnityUtils
             Integer,
             Decimal,
             Switch,
+            Special,
         }
 
         public enum ArgumentResult
@@ -23,6 +24,7 @@ namespace CGenStudios.UnityUtils
             TooFewArgs,
             TooManyArgs,
             WrongType,
+            BadPattern,
             CommandDoesNotExist,
             BadQuotes,
         }
@@ -90,7 +92,7 @@ namespace CGenStudios.UnityUtils
             public void LogHelp()
             {
                 Log(Identifier + " - " + Description);
-                Log("Usage: " + UsageFull);
+                Log("> Usage: " + UsageFull);
             }
 
             public void Fire(Command cmd)
@@ -105,13 +107,13 @@ namespace CGenStudios.UnityUtils
         public struct Parameter
         {
             // Const
-            public const string BEGIN_REQUIRED = "<";
+            public const string BEGIN_REQUIRED = "[";
 
-            public const string END_REQUIRED = ">";
+            public const string END_REQUIRED = "]";
 
-            public const string BEGIN_OPTIONAL = "[";
+            public const string BEGIN_OPTIONAL = "{";
 
-            public const string END_OPTIONAL = "]";
+            public const string END_OPTIONAL = "}";
 
             public const string MATCH_FLOAT_PATTERN = @"^\-?([0-9]*\.)?[0-9]+$";
 
@@ -238,6 +240,8 @@ namespace CGenStudios.UnityUtils
                             return IsFloat;
                         case ParameterType.Switch:
                             return IsBool;
+                        case ParameterType.Special:
+                            return Parameter.Validate(Input, Parameter.Pattern);
                     }
 
                     return true;
@@ -282,44 +286,51 @@ namespace CGenStudios.UnityUtils
                 //     input = input.Replace("  ", " ");
                 // }
 
-                List<StringBuilder> strArgs = new List<StringBuilder>();
-                strArgs.Add(new StringBuilder());
-
                 bool inQuotes = false;
+                List<string> rawArgs = new List<string>();
 
-                for (int i = 0; i < input.Length; i++)
+                if (!string.IsNullOrEmpty(input))
                 {
-                    bool isQuote = input[i] == '"' && (i == 0 || input[i - 1] != '\\');
+                    List<StringBuilder> strArgs = new List<StringBuilder>();
+                    strArgs.Add(new StringBuilder());
 
-                    if (isQuote)
+                    for (int i = 0; i < input.Length; i++)
                     {
-                        inQuotes = !inQuotes;
-                    }
+                        bool isQuote = input[i] == '"' && (i == 0 || input[i - 1] != '\\');
 
-                    if ((input[i] == ' ' && !inQuotes) || isQuote)
-                    {
-                        if (strArgs[strArgs.Count - 1].Length > 0)
+                        if (isQuote)
                         {
-                            strArgs.Add(new StringBuilder());
+                            inQuotes = !inQuotes;
+                        }
+
+                        if ((input[i] == ' ' && !inQuotes) || isQuote)
+                        {
+                            if (strArgs[strArgs.Count - 1].Length > 0)
+                            {
+                                strArgs.Add(new StringBuilder());
+                            }
+                        }
+                        else
+                        {
+                            strArgs[strArgs.Count - 1].Append(input[i]);
                         }
                     }
-                    else
+
+                    for (int i = 0; i < strArgs.Count; i++)
                     {
-                        strArgs[strArgs.Count - 1].Append(input[i]);
+                        if (strArgs[i].Length > 0)
+                        {
+                            rawArgs.Add(strArgs[i].ToString().Trim());
+                        }
                     }
                 }
+
 
                 args = new Argument[prototype.Parameters.Length];
 
                 if (inQuotes)
                 {
                     return ArgumentResult.BadQuotes;
-                }
-
-                List<string> rawArgs = new List<string>();
-                for (int i = 0; i < strArgs.Count; i++)
-                {
-                    rawArgs.Add(strArgs[i].ToString().Trim());
                 }
 
                 if (rawArgs.Count > prototype.Parameters.Length)
@@ -438,16 +449,19 @@ namespace CGenStudios.UnityUtils
 
         public struct LogEntry
         {
-            public LogEntry(object message, LogLevel logLevel)
+            public LogEntry(object message, LogLevel logLevel, string color)
             {
                 Message = message;
                 LogLevel = logLevel;
+                Color = color;
                 LogTime = Time.time;
             }
 
             public object Message { get; }
 
             public LogLevel LogLevel { get; }
+
+            public string Color { get; }
 
             public float LogTime { get; }
 
@@ -499,7 +513,7 @@ namespace CGenStudios.UnityUtils
 
             public override string ToString()
             {
-                return Prefix + " " + Message.ToString();
+                return Prefix + (Color == null ? " " : " <color=" + Color + ">") + Message.ToString() + (Color == null ? "" : "</color>");
             }
         }
 
@@ -530,81 +544,113 @@ namespace CGenStudios.UnityUtils
 
         private void AddBaseCommands()
         {
-            Prototypes.Add(new Prototype("help", "Logs all valid commands and their uses.", new Parameter[]
+            Prototypes.Add(new Prototype("help", "Logs all valid commands and their uses", new Parameter[]
             {
                 new Parameter("cmd",ParameterType.String,"The command to get help with","",Parameter.MATCH_ANY_PATTERN)
             }, (command) =>
             {
-                if (Prototypes.Contains(command.Arguments[0].Input))
+                if (command.Arguments[0].Input != "")
                 {
-                    Prototypes[command.Arguments[0].Input].LogHelp();
+                    if (Prototypes.Contains(command.Arguments[0].Input))
+                    {
+                        Prototypes[command.Arguments[0].Input].LogHelp();
+                    }
+                    else
+                    {
+                        Log("Command does not exist", LogLevel.Info);
+                    }
                 }
                 else
                 {
-                    foreach (Prototype prototype in Prototypes)
-                    {
-                        Log(prototype.UsageShort, LogLevel.Info);
-                    }
+                    string color = "#F0DC3C";
+                    Log("<b>Shared Utils Console</b> by <b>Alscenic</b>", LogLevel.Info, color);
+                    Log("github.com/Alscenic/shared-unity-utils", LogLevel.Info, color);
+                    Log("Type <b>\"list\"</b> for a list of all registered commands", LogLevel.Info, color);
                 }
             }));
 
-            Prototypes.Add(new Prototype("log", "Adds a log entry.", new Parameter[]
+            Prototypes.Add(new Prototype("list", "Lists all registered commands and their parameters", new Parameter[] { }, (command) =>
             {
-                new Parameter("msg",ParameterType.String,"The log message.",null,Parameter.MATCH_ANY_PATTERN),
-                new Parameter("lvl",ParameterType.Integer,"The log level.","2",Parameter.MATCH_INT_PATTERN)
+                foreach (Prototype prototype in Prototypes)
+                {
+                    Log(prototype.UsageShort, LogLevel.Info);
+                }
+            }));
+
+            Prototypes.Add(new Prototype("log", "Adds a log entry", new Parameter[]
+            {
+                new Parameter("msg",ParameterType.String,"The log message",null,Parameter.MATCH_ANY_PATTERN),
+                new Parameter("lvl",ParameterType.Integer,"The log level","3",Parameter.MATCH_INT_PATTERN)
             }, (command) =>
             {
                 Log(command.Arguments[0].Input, (LogLevel)Mathf.Clamp(command.Arguments[1].GetInt, 0, typeof(LogLevel).GetEnumValues().Length - 1));
+            }));
+
+            Prototypes.Add(new Prototype("logtest", "Adds a log entry of each level", new Parameter[] { }, (command) =>
+            {
+                for (int i = 0; i < typeof(LogLevel).GetEnumValues().Length; i++)
+                {
+                    Log("Log level " + i, (LogLevel)i);
+                }
+            }));
+
+            Prototypes.Add(new Prototype("phys.gravity", "Adds a log entry", new Parameter[]
+            {
+                new Parameter("x",ParameterType.Decimal,"Gravity X",null,Parameter.MATCH_FLOAT_PATTERN),
+                new Parameter("y",ParameterType.Decimal,"Gravity Y",null,Parameter.MATCH_FLOAT_PATTERN),
+                new Parameter("z",ParameterType.Decimal,"Gravity Z",null,Parameter.MATCH_FLOAT_PATTERN)
+            }, (command) =>
+            {
+                Physics.gravity = new Vector3(command.Arguments[0].GetFloat, command.Arguments[1].GetFloat, command.Arguments[2].GetFloat);
+            }));
+
+            Prototypes.Add(new Prototype("phys2d.gravity", "Adds a log entry", new Parameter[]
+            {
+                new Parameter("x",ParameterType.Decimal,"Gravity X",null,Parameter.MATCH_FLOAT_PATTERN),
+                new Parameter("y",ParameterType.Decimal,"Gravity Y",null,Parameter.MATCH_FLOAT_PATTERN)
+            }, (command) =>
+            {
+                Physics2D.gravity = new Vector2(command.Arguments[0].GetFloat, command.Arguments[1].GetFloat);
             }));
         }
 
         public class Window
         {
-            public const float DEFAULT_WIDTH = 0.4f;
+            public const float DEFAULT_WIDTH = 800.0f;
 
-            public const float DEFAULT_HEIGHT = 0.4f;
+            public const float DEFAULT_HEIGHT = 600.0f;
 
-            public const float MIN_WIDTH = 0.1f;
+            public const float MIN_WIDTH = 400.0f;
 
-            public const float MIN_HEIGHT = 0.1f;
+            public const float MIN_HEIGHT = 300.0f;
 
-            private Rect LocalScreenRect { get; set; } = new Rect(0.0f, 0.0f, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            private Rect LocalRect { get; set; } = new Rect(20.0f, 20.0f, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-            public Rect ScreenRect
+            public Rect WindowRect
             {
-                get => LocalScreenRect;
+                get => LocalRect;
                 set
                 {
-                    LocalScreenRect = value;
+                    LocalRect = value;
 
-                    LocalScreenRect = new Rect(new Vector2(
-                        Mathf.Clamp(LocalScreenRect.x, 0.0f, Mathf.Max(0.0f, 1.0f - LocalScreenRect.width)),
-                        Mathf.Clamp(LocalScreenRect.y, 0.0f, Mathf.Max(0.0f, 1.0f - LocalScreenRect.height))),
-                        LocalScreenRect.size);
+                    LocalRect = new Rect(new Vector2(
+                        Mathf.Clamp(LocalRect.x, 0.0f, Mathf.Max(0.0f, Screen.width - LocalRect.width)),
+                        Mathf.Clamp(LocalRect.y, 0.0f, Mathf.Max(0.0f, Screen.height - LocalRect.height))),
+                        LocalRect.size);
 
-                    LocalScreenRect = new Rect(LocalScreenRect.position, new Vector2(
-                        Mathf.Clamp(LocalScreenRect.width, MIN_WIDTH, 1.0f - LocalScreenRect.x),
-                        Mathf.Clamp(LocalScreenRect.height, MIN_HEIGHT, 1.0f - LocalScreenRect.y)));
+                    LocalRect = new Rect(LocalRect.position, new Vector2(
+                        Mathf.Clamp(LocalRect.width, MIN_WIDTH, Screen.width - LocalRect.x),
+                        Mathf.Clamp(LocalRect.height, MIN_HEIGHT, Screen.height - LocalRect.y)));
                 }
             }
 
-            public Rect ActualRect
-            {
-                get =>
-                    new Rect(new Vector2(ScreenRect.x * Screen.width, ScreenRect.y * Screen.height),
-                    new Vector2(ScreenRect.width * Screen.width, ScreenRect.height * Screen.height));
-                set => ScreenRect =
-                    new Rect(new Vector2(value.x / Screen.width, value.y / Screen.height),
-                    new Vector2(value.width / Screen.width, value.height / Screen.height));
-            }
+            public Vector4 Padding => new Vector4(GripSize, GripSize, GripSize, GripSize);
 
-            public float GripSize { get; set; } = 0.015f;
+            public Rect InteriorRect => new Rect(WindowRect.position + new Vector2(Padding.x, Padding.y), WindowRect.size - new Vector2(Padding.x, Padding.y) - new Vector2(Padding.z, Padding.w));
 
-            public float InputFieldSize { get; set; } = 0.023f;
+            public float GripSize { get; set; } = 20.0f;
 
-            public float ActualGripSize => GripSize * Screen.height;
-
-            public float ActualInputFieldSize => InputFieldSize * Screen.height;
+            public float InputFieldSize { get; set; } = 32.0f;
 
             public bool MouseDown { get; private set; } = false;
 
@@ -620,19 +666,19 @@ namespace CGenStudios.UnityUtils
 
             public string CurrentInput { get; set; } = "";
 
-            public Rect GrabBarRect => new Rect(ActualRect.position, new Vector2(ActualRect.width, ActualGripSize));
+            public Rect GrabBarRect => new Rect(WindowRect.position, new Vector2(WindowRect.width, GripSize));
 
-            public Rect SizeBarXRect => new Rect(ActualRect.position + new Vector2(ActualRect.size.x - ActualGripSize, ActualGripSize),
-            new Vector2(ActualGripSize, ActualRect.height - ActualGripSize));
+            public Rect SizeBarXRect => new Rect(WindowRect.position + new Vector2(WindowRect.size.x - GripSize, GripSize),
+            new Vector2(GripSize, WindowRect.height - GripSize));
 
-            public Rect SizeBarYRect => new Rect(ActualRect.position + new Vector2(0.0f, ActualRect.size.y - ActualGripSize),
-            new Vector2(ActualRect.width, ActualGripSize));
+            public Rect SizeBarYRect => new Rect(WindowRect.position + new Vector2(0.0f, WindowRect.size.y - GripSize),
+            new Vector2(WindowRect.width, GripSize));
 
-            public Rect InputFieldRect => new Rect(ActualRect.position + new Vector2(0.0f, ActualRect.size.y - ActualGripSize - ActualInputFieldSize),
-            new Vector2(ActualRect.size.x - ActualGripSize, ActualInputFieldSize));
+            public Rect InputFieldRect => new Rect(InteriorRect.position + new Vector2(0.0f, InteriorRect.size.y - InputFieldSize),
+            new Vector2(InteriorRect.size.x, InputFieldSize));
 
-            public Rect LogAreaScrollRect => new Rect(ActualRect.position + new Vector2(0.0f, ActualGripSize),
-            ActualRect.size - new Vector2(ActualGripSize, ActualGripSize * 2.0f + ActualInputFieldSize));
+            public Rect LogAreaScrollRect => new Rect(InteriorRect.position,
+            InteriorRect.size - new Vector2(0.0f, InputFieldSize));
 
             public float ScrollbarHeight => GUI.skin.horizontalScrollbar.CalcHeight(new GUIContent(), 100.0f);
 
@@ -646,6 +692,8 @@ namespace CGenStudios.UnityUtils
 
             private int LocalScrollLine { get; set; } = 0;
 
+            private bool FocusInputField { get; set; } = false;
+
             public int ScrollLine
             {
                 get => LocalScrollLine;
@@ -654,13 +702,19 @@ namespace CGenStudios.UnityUtils
 
             public void Draw()
             {
-                GUI.Box(ActualRect, new GUIContent());
-                GUI.Box(GrabBarRect, new GUIContent());
-                GUI.Box(SizeBarXRect, new GUIContent());
-                GUI.Box(SizeBarYRect, new GUIContent());
+                GUI.Box(WindowRect, new GUIContent());
+
+                // Vector2 actualGripSquare = new Vector2(GripSize, GripSize);
+                // GUI.Box(new Rect(WindowRect.position + WindowRect.size - actualGripSquare, actualGripSquare), new GUIContent(), GUI.skin.GetStyle("grabme"));
 
                 GUI.SetNextControlName("ConsoleInput");
                 CurrentInput = GUI.TextField(InputFieldRect, CurrentInput);
+                if (FocusInputField)
+                {
+                    GUI.FocusControl("ConsoleInput");
+                    FocusInputField = false;
+                }
+
                 while (CurrentInput.IndexOf('`') >= 0)
                 {
                     CurrentInput = CurrentInput.Replace("`", "");
@@ -699,7 +753,7 @@ namespace CGenStudios.UnityUtils
                     {
                         MouseDown = true;
                         MouseDownOrigin = MousePos;
-                        MouseDownOffset = MousePos - ActualRect.position;
+                        MouseDownOffset = MousePos - WindowRect.position;
 
                         if (GrabBarRect.Contains(MousePos))
                         {
@@ -719,32 +773,32 @@ namespace CGenStudios.UnityUtils
                     }
                 }
 
-                if (ActualRect.Contains(MousePos) && Event.current.isScrollWheel)
+                if (WindowRect.Contains(MousePos) && Event.current.isScrollWheel)
                 {
                     ScrollLine -= (int)Mathf.Sign(Event.current.delta.y);
                 }
 
                 if (Grabbing)
                 {
-                    ActualRect = new Rect(MousePos - MouseDownOffset, ActualRect.size);
+                    WindowRect = new Rect(MousePos - MouseDownOffset, WindowRect.size);
                 }
                 else
                 {
                     if (SizingX)
                     {
-                        ActualRect = new Rect(ActualRect.position, new Vector2((MousePos.x - MouseDownOrigin.x) + MouseDownOffset.x, ActualRect.size.y));
+                        WindowRect = new Rect(WindowRect.position, new Vector2((MousePos.x - MouseDownOrigin.x) + MouseDownOffset.x, WindowRect.size.y));
                     }
 
                     if (SizingY)
                     {
-                        ActualRect = new Rect(ActualRect.position, new Vector2(ActualRect.size.x, (MousePos.y - MouseDownOrigin.y) + MouseDownOffset.y));
+                        WindowRect = new Rect(WindowRect.position, new Vector2(WindowRect.size.x, (MousePos.y - MouseDownOrigin.y) + MouseDownOffset.y));
                     }
                 }
             }
 
             public void Open()
             {
-                GUI.FocusControl("ConsoleInput");
+                FocusInputField = true;
             }
 
             public void Send()
@@ -766,6 +820,8 @@ namespace CGenStudios.UnityUtils
             }
         }
 
+        public bool ConsoleEnabled { get; set; } = true;
+
         public Window MainWindow { get; } = new Window();
 
         private void OnGUI()
@@ -781,14 +837,17 @@ namespace CGenStudios.UnityUtils
 
         private void Update()
         {
-            if (UnityEngine.InputSystem.Keyboard.current.backquoteKey.wasPressedThisFrame)
+            if (ConsoleEnabled)
             {
-                Toggle();
-            }
+                if (UnityEngine.InputSystem.Keyboard.current.backquoteKey.wasPressedThisFrame)
+                {
+                    Toggle();
+                }
 
-            if (IsOpen && UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame)
-            {
-                MainWindow.Send();
+                if (IsOpen && (UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame || UnityEngine.InputSystem.Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                {
+                    MainWindow.Send();
+                }
             }
         }
 
@@ -822,12 +881,19 @@ namespace CGenStudios.UnityUtils
 
         public static void Log(object message, LogLevel logLevel)
         {
-            Instance.LocalLogger.Entries.Add(new LogEntry(message, logLevel));
+            Log(message, logLevel, null);
+        }
+
+        public static void Log(object message, LogLevel logLevel, string color)
+        {
+            Instance.LocalLogger.Entries.Add(new LogEntry(message, logLevel, color));
         }
 
         public static ArgumentResult ParseCommand(string input, out Command command)
         {
-            Log(input, LogLevel.Command);
+            input = input.Trim();
+
+            Log(input, LogLevel.Command, "#999999");
 
             int identifierEnd = input.IndexOf(' ');
             string identifier = input.Substring(0, identifierEnd < 0 ? input.Length : identifierEnd);
@@ -836,7 +902,7 @@ namespace CGenStudios.UnityUtils
             {
                 Prototype prototype = Instance.Prototypes[identifier];
 
-                string fullRaw = input.Trim();
+                string fullRaw = input;
                 string raw = fullRaw.Substring(prototype.Identifier.Length).Trim();
                 ArgumentResult argResult = Argument.FromInput(prototype, raw, out Argument[] arguments);
 
