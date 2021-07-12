@@ -185,7 +185,7 @@ namespace CGenStudios.UnityUtils
 
         private void Update()
         {
-            if (ConsoleEnabled)
+            if (ConsoleEnabled && UnityEngine.InputSystem.Keyboard.current != null)
             {
                 if (UnityEngine.InputSystem.Keyboard.current.backquoteKey.wasPressedThisFrame)
                 {
