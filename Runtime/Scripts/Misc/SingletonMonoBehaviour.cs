@@ -6,7 +6,7 @@ namespace CGenStudios.UnityUtils
     /// <summary>
     /// Inherit from this class with your class as the type, and in a static method with the [RuntimeInitializeOnLoadMethod] attribute, call the inherited method Initialize().
     /// </summary>
-    public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour
+    public class SingletonMonoBehaviour<T> : MonoBehaviour, ISingleton where T : MonoBehaviour, ISingleton
     {
         public static T Instance { get; private set; } = null;
 
@@ -14,7 +14,7 @@ namespace CGenStudios.UnityUtils
 
         protected bool ThisInstanceInitialized { get; private set; } = false;
 
-        private void Start()
+        protected virtual void Start()
         {
             // If the object is initialized via scene instead of [RuntimeInitializeOnLoadMethod]
             if (!InstanceInitialized)
@@ -69,11 +69,11 @@ namespace CGenStudios.UnityUtils
         private static void CompleteInitialization()
         {
             DontDestroyOnLoad(Instance.gameObject);
-            Instance.Invoke("OnInitialize", 0.0f);
+            Instance.OnInitialize();
             InstanceInitialized = true;
         }
 
-        protected virtual void OnInitialize()
+        public virtual void OnInitialize()
         {
             ThisInstanceInitialized = true;
         }

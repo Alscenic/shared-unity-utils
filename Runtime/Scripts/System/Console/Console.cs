@@ -31,7 +31,7 @@ namespace CGenStudios.UnityUtils
             Initialize();
         }
 
-        protected override void OnInitialize()
+        public override void OnInitialize()
         {
             base.OnInitialize();
 
