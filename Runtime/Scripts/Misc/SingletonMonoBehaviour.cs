@@ -8,49 +8,74 @@ namespace CGenStudios.UnityUtils
     /// </summary>
     public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour
     {
-        [SerializeField]
-        [TextArea]
-        private string m_SingletonInfo = SINGLETON_INFO;
-
-        private const string SINGLETON_INFO = "This script is not meant to be manually " +
-            "added to GameObjects, as they will be created automatically at run-time. Leaving " +
-            "this script on an object will cause at least one duplicate.";
-
-        protected virtual void OnValidate()
-        {
-            this.m_SingletonInfo = SINGLETON_INFO;
-        }
-
         public static T Instance { get; private set; } = null;
 
-        private static bool InstanceInitialized { get; set; } = false;
+        public static bool InstanceInitialized { get; private set; } = false;
+
+        protected bool ThisInstanceInitialized { get; private set; } = false;
+
+        private void Start()
+        {
+            // If the object is initialized via scene instead of [RuntimeInitializeOnLoadMethod]
+            if (!InstanceInitialized)
+            {
+                Initialize(GetComponent<T>());
+            }
+            // If we've already initialized an object
+            else
+            {
+                // and this one hasn't been initialized
+                if (!ThisInstanceInitialized)
+                {
+                    // then we're a dupe & need to destroy
+                    Destroy(GetComponent<T>());
+                }
+            }
+        }
 
         /// <summary>
-        /// Call this method from a static method with the [RuntimeInitializeOnLoadMethod] attribute.
+        /// Call this method from a static method that has the [RuntimeInitializeOnLoadMethod] attribute.
         /// </summary>
         protected static void Initialize()
         {
             if (!InstanceInitialized)
             {
                 Instance = new GameObject(typeof(T).Name).AddComponent<T>();
-                DontDestroyOnLoad(Instance.gameObject);
-                Instance.Invoke("Initialized", 0.0f);
-
-                InstanceInitialized = true;
+                CompleteInitialization();
             }
         }
 
+        /// <summary>
+        /// You probably mean to call <see cref="Initialize"/>.
+        /// </summary>
         protected static void Initialize(GameObject prefab)
         {
             if (!InstanceInitialized)
             {
                 Instance = Instantiate(prefab).GetComponent<T>();
-                Instance.Invoke("Initialized", 0.0f);
-
-                InstanceInitialized = true;
+                CompleteInitialization();
             }
         }
 
-        protected virtual void Initialized() { }
+        /// <summary>
+        /// You probably mean to call <see cref="Initialize"/>.
+        /// </summary>
+        protected static void Initialize(T component)
+        {
+            Instance = component;
+            CompleteInitialization();
+        }
+
+        private static void CompleteInitialization()
+        {
+            DontDestroyOnLoad(Instance.gameObject);
+            Instance.Invoke("OnInitialize", 0.0f);
+            InstanceInitialized = true;
+        }
+
+        protected virtual void OnInitialize()
+        {
+            ThisInstanceInitialized = true;
+        }
     }
 }

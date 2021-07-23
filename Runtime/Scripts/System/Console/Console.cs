@@ -31,9 +31,9 @@ namespace CGenStudios.UnityUtils
             Initialize();
         }
 
-        protected override void Initialized()
+        protected override void OnInitialize()
         {
-            base.Initialized();
+            base.OnInitialize();
 
             Skin = Resources.Load<GUISkin>("alscenicUtils_guiSkin_console");
 
