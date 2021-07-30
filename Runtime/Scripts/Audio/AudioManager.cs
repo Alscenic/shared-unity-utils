@@ -2,18 +2,27 @@
 
 namespace CGenStudios.UnityUtils.Audio
 {
-	/// <summary>
-	/// Created automatically at runtime.
-	/// </summary>
-	public class AudioManager : LazySingletonMonoBehaviour<AudioManager>
-	{
-		#region Public Indexers + Properties
+    /// <summary>
+    /// Created automatically at runtime.
+    /// </summary>
+    public class AudioManager : SingletonMonoBehaviour<AudioManager>
+    {
+        /// <summary>
+        /// Gets the audio prefab.
+        /// </summary>
+        public GameObject AudioPrefab { get; private set; } = null;
 
-		/// <summary>
-		/// Gets the audio prefab.
-		/// </summary>
-		public GameObject AudioPrefab => Resources.Load<GameObject>("alscenicUtils_audio");
+        [RuntimeInitializeOnLoadMethod]
+        private static void RuntimeInitializeOnLoadMethod()
+        {
+            Initialize();
+        }
 
-		#endregion
-	}
+        public override void OnInitialize()
+        {
+            base.OnInitialize();
+
+            AudioPrefab = Resources.Load<GameObject>("alscenicUtils_audio");
+        }
+    }
 }
