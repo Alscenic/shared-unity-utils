@@ -75,6 +75,8 @@ namespace CGenStudios.UnityUtils.Audio
             [SerializeField]
             private RangedFloat m_MaxDistance = new RangedFloat(500.0f, 500.0f);
 
+            public AudioData() { }
+
             public AudioData(AudioClip[] clips, RangedFloat volume, RangedFloat pitch, bool isPositional, bool playOnAwake, bool loop, RangedFloat maxDistance, RangedFloat minDistance)
             {
                 m_Clips = clips;
