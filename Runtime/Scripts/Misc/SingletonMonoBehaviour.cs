@@ -14,7 +14,9 @@ namespace CGenStudios.UnityUtils
 
         protected bool ThisInstanceInitialized { get; private set; } = false;
 
-        protected virtual void Start()
+        protected virtual void Start() { }
+
+        protected virtual void Awake()
         {
             // If the object is initialized via scene instead of [RuntimeInitializeOnLoadMethod]
             if (!InstanceInitialized)
